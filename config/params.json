@@ -1,0 +1,41 @@
+{
+  "dataset_dir": null,
+  "dataset_name": null,
+  "cuda": true,
+  "lr": 0.0001,
+  "step": [
+    100,
+    160,
+    200
+  ],
+  "gamma": 0.1,
+  "batch_size": 32,
+  "start_epoch": 0,
+  "max_epoch": 200,
+  "num_workers": 4,
+  "optimizer": "Adam",
+  "momentum": 0.9,
+  "weight_decay": 1e-4,
+  "train_feeder_args": {
+    "data_path": null,
+    "label_path": null,
+    "normalization": true,
+    "resize": true,
+    "random_choose": false,
+    "random_rotate": 0,
+    "window_size": -1,
+    "debug": false,
+    "mmap": true
+  },
+  "test_feeder_args": {
+    "data_path": null,
+    "label_path": null,
+    "normalization": true,
+    "resize": true,
+    "random_choose": false,
+    "random_rotate": 0,
+    "window_size": -1,
+    "debug": false,
+    "mmap": true
+  }
+}
