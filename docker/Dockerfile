@@ -11,8 +11,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 EXPOSE 6006
-
 WORKDIR /workspace
+
+RUN git clone https://github.com/jiamingNo1/VA_NN.git
 
 RUN pip3 install --upgrade pip && \
     for req in $(cat requirements.txt); do pip3 install $req; done
