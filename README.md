@@ -7,21 +7,25 @@ You can also reference to [microsoft official code](https://github.com/microsoft
 * Python3.6
 * PyTorch1.2
 * Opencv3.4
+* Other packages can be found in ```requirements.txt```
 
 ### Data Preparation
 
 Firstly, we need to download the [NTU-RGB+D](https://github.com/shahroudy/NTURGB-D) dataset.
+
+Other Datasets: not supported now
+
 * Extract the dataset to ```./data/NTU-RGB+D/nturgb+d_skeletons/```
 
 * Process the data
 
-```commandline
+```
 cd ./data
 
 python ntu_generate_data.py
 ```
 
-Finally, we get the cross-view and cross-subject subsets.
+Finally, we get the cross-view and cross-subject subsets for training, containing train, validate and test dataset seperately.
 
 ### Train
 
