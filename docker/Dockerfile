@@ -14,5 +14,6 @@ WORKDIR /workspace
 EXPOSE 6006
 
 RUN git clone https://github.com/jiamingNo1/VA_NN.git . && \
+    pip3 config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple && \
     pip3 install setuptools && \
     pip3 install -r requirements.txt
