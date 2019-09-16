@@ -1,8 +1,8 @@
-# This is the pytorch implement of View Adaptive Neural Networks(VA_NN)
+## This is the pytorch implement of View Adaptive Neural Networks(VA_NN)
 
 You can also reference to [microsoft official code](https://github.com/microsoft/View-Adaptive-Neural-Networks-for-Skeleton-based-Human-Action-Recognition).
 
-### 1. Prerequisites
+### Prerequisites
 
 * Python3.6
 * PyTorch1.2
@@ -10,16 +10,15 @@ You can also reference to [microsoft official code](https://github.com/microsoft
 
 ### Data Preparation
 
-Firstly, we need to download the [NTU-RGB+D](https://github.com/shahroudy/NTURGB-D) dataset, and extract the dataset to ./data/NTU-RGB+D/nturgb+d_skeletons/
+Firstly, we need to download the [NTU-RGB+D](https://github.com/shahroudy/NTURGB-D) dataset.
+* Extract the dataset to ```./data/NTU-RGB+D/nturgb+d_skeletons/```
 
-Then process the data
+* Process the data
 
-```
-
+```commandline
 cd ./data
 
 python ntu_generate_data.py
-
 ```
 
 Finally, we get the cross-view and cross-subject subsets.
