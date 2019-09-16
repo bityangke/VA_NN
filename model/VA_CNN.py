@@ -35,19 +35,19 @@ class VACNN(nn.Module):
         self.sub_class = sub_class
         self.num_class = num_class
         self.sub_conv1 = nn.Sequential(
-            nn.Conv2d(in_channels=in_channel, out_channels=out_channel, kernel_size=5, stride=2, padding=2),
+            nn.Conv2d(in_channel, out_channel, kernel_size=5, stride=2, bias=False),
             nn.BatchNorm2d(out_channel),
-            nn.ReLU()
+            nn.ReLU(inplace=True)
         )
         self.sub_conv2 = nn.Sequential(
-            nn.Conv2d(in_channels=out_channel, out_channels=out_channel, kernel_size=5, stride=2, padding=2),
+            nn.Conv2d(out_channel, out_channel, kernel_size=5, stride=2, bias=False),
             nn.BatchNorm2d(out_channel),
-            nn.ReLU(),
-            nn.MaxPool2d(2)
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(7)
         )
-        self.sub_fc = nn.Linear((height_frame // 8) * (width_joint // 8) * out_channel, sub_class)
-        self.resnet_layer = nn.Sequential(*list(base_model.children())[:-2])
-        self.Liner_layer = nn.Linear(2048 * (height_frame // 32) * (width_joint // 32), num_class)
+        self.sub_fc = nn.Linear(6272, sub_class)
+        self.resnet_layer = nn.Sequential(*list(base_model.children())[:-1])
+        self.Liner_layer = nn.Linear(2048, num_class)
 
     def forward(self, x, target=None):
         N, C, T, V, M = x.size()
@@ -95,7 +95,7 @@ class VACNN(nn.Module):
 
 
 if __name__ == '__main__':
-    resnet = models.resnet50(pretrained=False)
+    resnet = models.resnet50(pretrained=True)
     model = VACNN(base_model=resnet)
     children = list(model.children())
     print(children)

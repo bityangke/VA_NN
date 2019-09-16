@@ -10,7 +10,7 @@ import torch
 import torch.nn as nn
 import torch.nn.init as init
 import torch.optim as optim
-from torch.optim.lr_scheduler import MultiStepLR
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.tensorboard import SummaryWriter
 import torchvision.models as models
 from datetime import datetime
@@ -35,70 +35,7 @@ parser.add_argument('--mode', default='train', help='train or test')
 parser.add_argument('--cuda', default='True', type=str2bool, help='use cuda to train model')
 
 
-def train(writer, model, optimizer, device, train_loader, epoch):
-    model.train()
-    losses = 0.0
-    for idx, (data, target) in enumerate(train_loader):
-        data, target = data.to(device=device, dtype=torch.float), target.to(device)
-        output = model(data)
-        loss = nn.CrossEntropyLoss()(output, target)
-        loss.backward()
-        losses += loss.item()
-        optimizer.step()
-        optimizer.zero_grad()
-        if (idx + 1) % 20 == 0:
-            writer.add_scalar('Loss/train',
-                              losses / 20,
-                              epoch * len(train_loader) + idx + 1)
-            print("{:%Y-%m-%dT%H-%M-%S}  epoch:{}  (batch:{} loss:{:.4f}).".format(datetime.now(), epoch + 1,
-                                                                                   idx + 1,
-                                                                                   losses / 20))
-            losses = 0.0
-
-
-def test(model, device, test_loader, writer=None, epoch=None):
-    model.eval()
-    loss = 0.0
-    correct = 0
-    with torch.no_grad():
-        for data, target in test_loader:
-            data, target = data.to(device=device, dtype=torch.float), target.to(device)
-            output = model(data)
-            loss += nn.CrossEntropyLoss(reduction='sum')(output, target).item()
-            pred = output.argmax(dim=1, keepdim=True)
-            correct += pred.eq(target.view_as(pred)).sum().item()
-        if writer is not None and epoch is not None:
-            writer.add_scalar('Accuracy/train',
-                              100. * correct / len(test_loader.dataset),
-                              epoch + 1)
-        loss /= len(test_loader.dataset)
-        print('(Test set)  Epoch:{}  Average loss: {:.3f}, Accuracy: {}/{} ({:.2f}%)'.
-              format(epoch + 1, loss, correct, len(test_loader.dataset), 100. * correct / len(test_loader.dataset)))
-
-
-def weights_init(m):
-    if isinstance(m, nn.Conv2d):
-        init.xavier_normal_(m.weight.data)
-        if m.bias is not None:
-            init.zeros_(m.bias.data)
-    elif isinstance(m, nn.Linear):
-        init.zeros_(m.weight.data)
-        if m.bias is not None:
-            init.zeros_(m.bias.data)
-    elif isinstance(m, nn.BatchNorm2d):
-        init.normal_(m.weight)
-        if m.bias is not None:
-            init.constant_(m.bias, 0)
-    elif isinstance(m, nn.LSTM):
-        for name, param in m.named_parameters():
-            if 'bias' in name:
-                init.constant_(param, 0.0)
-            elif 'weight' in name:
-                init.orthogonal_(param)
-
-
-if __name__ == '__main__':
-
+def main():
     # params
     args = parser.parse_args()
     json_file = 'config/params.json'
@@ -133,10 +70,9 @@ if __name__ == '__main__':
 
     # optimizer mode
     if params['optimizer'] == 'Adam':
-        optimizer = optim.Adam(model.parameters(), lr=params['lr'], weight_decay=params['weight_decay'])
+        optimizer = optim.Adam(model.parameters(), lr=params['lr'])
     elif params['optimizer'] == 'SGD':
-        optimizer = optim.SGD(model.parameters(), lr=params['lr'], momentum=params['momentum'],
-                              weight_decay=params['weight_decay'])
+        optimizer = optim.SGD(model.parameters(), lr=params['lr'])
     else:
         raise ValueError()
 
@@ -166,19 +102,19 @@ if __name__ == '__main__':
 
     # data loader and learning rate strategy
     train_loader = fetch_dataloader('train', params)
+    val_loader = fetch_dataloader('val', params)
     test_loader = fetch_dataloader('test', params)
-    lr_scheduler = MultiStepLR(optimizer, milestones=params['step'],
-                               gamma=params['gamma'], last_epoch=params['start_epoch'] - 1)
+    lr_scheduler = ReduceLROnPlateau(optimizer, mode='max', factor=params['lr'], patience=2, cooldown=2, verbose=True)
 
     # tensorboard
-    TIMESTAMP = "{:%Y-%m-%dT%H-%M-%S/}".format(datetime.now())
-    writer = SummaryWriter('{}{}/'.format(args.log_dir, args.model_name) + TIMESTAMP)
+    TIMESTAMP = "{0:%Y-%m-%dT%H-%M-%S/}".format(datetime.now())
 
     # train and test
     if args.mode == 'train':
+        writer = SummaryWriter('{}{}/'.format(args.log_dir, args.model_name) + TIMESTAMP)
         for epoch in range(params['start_epoch'], params['max_epoch']):
             train(writer, model, optimizer, device, train_loader, epoch)
-            if (epoch + 1) % 10 == 0:
+            if (epoch + 1) % 5 == 0:
                 torch.save({'epoch': epoch,
                             'state_dict': model.state_dict(),
                             'optimizer': optimizer.state_dict()
@@ -187,9 +123,92 @@ if __name__ == '__main__':
                 print("{:%Y-%m-%dT%H-%M-%S} saved model {}".format(
                     datetime.now(),
                     args.save_dir + args.model_name + '/{}_{}.pth'.format(args.model_name, str(epoch + 1))))
-                test(model, device, test_loader, writer=writer, epoch=epoch)
-            lr_scheduler.step()
+            current = val(model, device, val_loader, writer, epoch)
+            lr_scheduler.step(current)
         print('Finished Training')
+        writer.close()
     else:
         test(model, device, test_loader)
-    writer.close()
+
+
+def train(writer, model, optimizer, device, train_loader, epoch):
+    model.train()
+    losses = 0.0
+    for idx, (data, target) in enumerate(train_loader):
+        data, target = data.to(device=device, dtype=torch.float), target.to(device)
+        output = model(data)
+        loss = nn.CrossEntropyLoss()(output, target)
+        loss.backward()
+        losses += loss.item()
+        if (idx + 1) % 4 == 0:
+            optimizer.step()
+            optimizer.zero_grad()
+        if (idx + 1) % 80 == 0:
+            writer.add_scalar('Loss/train',
+                              losses / 20,
+                              epoch * (len(train_loader) // 4 + 1) + idx // 4 + 1)
+            print("{:%Y-%m-%dT%H-%M-%S}  epoch:{}  (batch:{} loss:{:.2f}).".format(datetime.now(), epoch + 1,
+                                                                                   idx // 4 + 1,
+                                                                                   losses / 20))
+            losses = 0.0
+
+
+def val(model, device, val_loader, writer, epoch):
+    model.eval()
+    loss = 0.0
+    correct = 0
+    with torch.no_grad():
+        for data, target in val_loader:
+            data, target = data.to(device=device, dtype=torch.float), target.to(device)
+            output = model(data)
+            loss += nn.CrossEntropyLoss(reduction='sum')(output, target).item()
+            pred = output.argmax(dim=1, keepdim=True)
+            correct += pred.eq(target.view_as(pred)).sum().item()
+            writer.add_scalar('Accuracy/train',
+                              100. * correct / len(val_loader.dataset),
+                              epoch + 1)
+        loss /= len(val_loader.dataset)
+        print('(Val set)  Epoch:{}  Average loss: {:.2f}, Accuracy: {}/{} ({:.1f}%)'.
+              format(epoch + 1, loss, correct, len(val_loader.dataset), 100. * correct / len(val_loader.dataset)))
+    return 100.0 * correct / len(val_loader.dataset)
+
+
+def test(model, device, test_loader):
+    model.eval()
+    loss = 0.0
+    correct = 0
+    with torch.no_grad():
+        for data, target in test_loader:
+            data, target = data.to(device=device, dtype=torch.float), target.to(device)
+            output = model(data)
+            loss += nn.CrossEntropyLoss(reduction='sum')(output, target).item()
+            pred = output.argmax(dim=1, keepdim=True)
+            correct += pred.eq(target.view_as(pred)).sum().item()
+        loss /= len(test_loader.dataset)
+        print('(Test set) Average loss: {:.2f}, Accuracy: {}/{} ({:.1f}%)'.
+              format(loss, correct, len(test_loader.dataset), 100. * correct / len(test_loader.dataset)))
+
+
+def weights_init(m):
+    if isinstance(m, nn.Conv2d):
+        init.xavier_normal_(m.weight.data)
+        if m.bias is not None:
+            init.zeros_(m.bias.data)
+    elif isinstance(m, nn.Linear):
+        init.zeros_(m.weight.data)
+        init.zeros_(m.bias.data)
+    elif isinstance(m, nn.BatchNorm2d):
+        init.constant_(m.weight.data, 1)
+        init.constant_(m.bias.data, 0)
+        m.momentum = 0.99
+        m.eps = 1e-3
+    elif isinstance(m, nn.LSTM):
+        for name, param in m.named_parameters():
+            if 'bias' in name:
+                init.constant_(param, 0.0)
+            elif 'weight' in name:
+                init.orthogonal_(param)
+
+
+if __name__ == '__main__':
+    main()
