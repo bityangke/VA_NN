@@ -93,19 +93,19 @@ class Feeder(torch.utils.data.Dataset):
 
 def fetch_dataloader(mode, params):
     if 'CV' in params['dataset_name']:
-        params['train_feeder_args']['data_path'] = params['dataset_dir'] + 'NTU-RGB-D' + '/cv/train_data.npy'
-        params['train_feeder_args']['label_path'] = params['dataset_dir'] + 'NTU-RGB-D' + '/cv/train_label.pkl'
-        params['val_feeder_args']['data_path'] = params['dataset_dir'] + 'NTU-RGB-D' + '/cv/val_data.npy'
-        params['val_feeder_args']['label_path'] = params['dataset_dir'] + 'NTU-RGB-D' + '/cv/val_label.pkl'
-        params['test_feeder_args']['data_path'] = params['dataset_dir'] + 'NTU-RGB-D' + '/cv/test_data.npy'
-        params['test_feeder_args']['label_path'] = params['dataset_dir'] + 'NTU-RGB-D' + '/cv/test_label.pkl'
+        params['train_feeder_args']['data_path'] = params['dataset_dir'] + 'NTU-RGB+D' + '/cv/train_data.npy'
+        params['train_feeder_args']['label_path'] = params['dataset_dir'] + 'NTU-RGB+D' + '/cv/train_label.pkl'
+        params['val_feeder_args']['data_path'] = params['dataset_dir'] + 'NTU-RGB+D' + '/cv/val_data.npy'
+        params['val_feeder_args']['label_path'] = params['dataset_dir'] + 'NTU-RGB+D' + '/cv/val_label.pkl'
+        params['test_feeder_args']['data_path'] = params['dataset_dir'] + 'NTU-RGB+D' + '/cv/test_data.npy'
+        params['test_feeder_args']['label_path'] = params['dataset_dir'] + 'NTU-RGB+D' + '/cv/test_label.pkl'
     if 'CS' in params['dataset_name']:
-        params['train_feeder_args']['data_path'] = params['dataset_dir'] + 'NTU-RGB-D' + '/cs/train_data.npy'
-        params['train_feeder_args']['label_path'] = params['dataset_dir'] + 'NTU-RGB-D' + '/cs/train_label.pkl'
-        params['val_feeder_args']['data_path'] = params['dataset_dir'] + 'NTU-RGB-D' + '/cs/val_data.npy'
-        params['val_feeder_args']['label_path'] = params['dataset_dir'] + 'NTU-RGB-D' + '/cs/val_label.pkl'
-        params['test_feeder_args']['data_path'] = params['dataset_dir'] + 'NTU-RGB-D' + '/cs/test_data.npy'
-        params['test_feeder_args']['label_path'] = params['dataset_dir'] + 'NTU-RGB-D' + '/cs/test_label.pkl'
+        params['train_feeder_args']['data_path'] = params['dataset_dir'] + 'NTU-RGB+D' + '/cs/train_data.npy'
+        params['train_feeder_args']['label_path'] = params['dataset_dir'] + 'NTU-RGB+D' + '/cs/train_label.pkl'
+        params['val_feeder_args']['data_path'] = params['dataset_dir'] + 'NTU-RGB+D' + '/cs/val_data.npy'
+        params['val_feeder_args']['label_path'] = params['dataset_dir'] + 'NTU-RGB+D' + '/cs/val_label.pkl'
+        params['test_feeder_args']['data_path'] = params['dataset_dir'] + 'NTU-RGB+D' + '/cs/test_data.npy'
+        params['test_feeder_args']['label_path'] = params['dataset_dir'] + 'NTU-RGB+D' + '/cs/test_label.pkl'
     if mode == 'train':
         loader = torch.utils.data.DataLoader(
             dataset=Feeder(**params['train_feeder_args']),
@@ -129,8 +129,8 @@ def fetch_dataloader(mode, params):
 
 
 if __name__ == '__main__':
-    data_path = '/home/hjm/PycharmProjects/VA_NN/data/NTU-RGB-D/cv/test_data.npy'
-    label_path = '/home/hjm/PycharmProjects/VA_NN/data/NTU-RGB-D/cv/test_label.pkl'
+    data_path = '/home/hjm/PycharmProjects/VA_NN/data/NTU-RGB+D/cv/val_data.npy'
+    label_path = '/home/hjm/PycharmProjects/VA_NN/data/NTU-RGB+D/cv/val_label.pkl'
     dataset = Feeder(data_path,
                      label_path,
                      normalization=True,

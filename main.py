@@ -104,14 +104,14 @@ def main():
     train_loader = fetch_dataloader('train', params)
     val_loader = fetch_dataloader('val', params)
     test_loader = fetch_dataloader('test', params)
-    lr_scheduler = ReduceLROnPlateau(optimizer, mode='max', factor=params['lr'], patience=2, cooldown=2, verbose=True)
+    lr_scheduler = ReduceLROnPlateau(optimizer, mode='max', factor=params['lr'], patience=10, cooldown=0, verbose=True)
 
     # tensorboard
-    TIMESTAMP = "{0:%Y-%m-%dT%H-%M-%S/}".format(datetime.now())
+    time_stamp = "{0:%Y-%m-%dT%H-%M-%S/}".format(datetime.now())
 
     # train and test
     if args.mode == 'train':
-        writer = SummaryWriter('{}{}/'.format(args.log_dir, args.model_name) + TIMESTAMP)
+        writer = SummaryWriter('{}{}/'.format(args.log_dir, args.model_name) + time_stamp)
         for epoch in range(params['start_epoch'], params['max_epoch']):
             train(writer, model, optimizer, device, train_loader, epoch)
             if (epoch + 1) % 5 == 0:
@@ -123,7 +123,7 @@ def main():
                 print("{:%Y-%m-%dT%H-%M-%S} saved model {}".format(
                     datetime.now(),
                     args.save_dir + args.model_name + '/{}_{}.pth'.format(args.model_name, str(epoch + 1))))
-            current = val(model, device, val_loader, writer, epoch)
+            current = val(writer, model, device, val_loader, epoch)
             lr_scheduler.step(current)
         print('Finished Training')
         writer.close()
@@ -153,7 +153,7 @@ def train(writer, model, optimizer, device, train_loader, epoch):
             losses = 0.0
 
 
-def val(model, device, val_loader, writer, epoch):
+def val(writer, model, device, val_loader, epoch):
     model.eval()
     loss = 0.0
     correct = 0
@@ -164,11 +164,15 @@ def val(model, device, val_loader, writer, epoch):
             loss += nn.CrossEntropyLoss(reduction='sum')(output, target).item()
             pred = output.argmax(dim=1, keepdim=True)
             correct += pred.eq(target.view_as(pred)).sum().item()
-            writer.add_scalar('Accuracy/train',
-                              100. * correct / len(val_loader.dataset),
-                              epoch + 1)
+        print(loss)
         loss /= len(val_loader.dataset)
-        print('(Val set)  Epoch:{}  Average loss: {:.2f}, Accuracy: {}/{} ({:.1f}%)'.
+        writer.add_scalar('Accuracy/val',
+                          100. * correct / len(val_loader.dataset),
+                          epoch + 1)
+        writer.add_scalar('Loss/val',
+                          loss,
+                          epoch + 1)
+        print('(Val Set)  Epoch:{}  Average Loss: {:.2f}, Accuracy: {}/{} ({:.2f}%)'.
               format(epoch + 1, loss, correct, len(val_loader.dataset), 100. * correct / len(val_loader.dataset)))
     return 100.0 * correct / len(val_loader.dataset)
 
@@ -185,7 +189,7 @@ def test(model, device, test_loader):
             pred = output.argmax(dim=1, keepdim=True)
             correct += pred.eq(target.view_as(pred)).sum().item()
         loss /= len(test_loader.dataset)
-        print('(Test set) Average loss: {:.2f}, Accuracy: {}/{} ({:.1f}%)'.
+        print('(Test Set) Average Loss: {:.2f}, Accuracy: {}/{} ({:.2f}%)'.
               format(loss, correct, len(test_loader.dataset), 100. * correct / len(test_loader.dataset)))
 
 

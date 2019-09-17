@@ -9,6 +9,7 @@ import os
 import sys
 import pickle
 from numpy.lib.format import open_memmap
+from sklearn.model_selection import train_test_split
 from ntu_read_skeleton import read_xyz
 
 training_subjects = [1, 2, 4, 5, 8, 9, 13, 14, 15, 16, 17, 18, 19, 25, 27, 28, 31, 34, 35, 38]
@@ -62,6 +63,20 @@ def generate_data(data_path,
         if training:
             sample_name.append(filename)
             sample_label.append(action_class - 1)
+    if dataset == 'train':
+        sample_name, val_name, sample_label, val_label = train_test_split(sample_name, sample_label, test_size=0.05,
+                                                                          random_state=10000)
+        with open('{}/val_label.pkl'.format(out_path), 'wb') as f:
+            pickle.dump((val_name, list(val_label)), f)
+        f_data = open_memmap('{}/val_data.npy'.format(out_path),
+                             dtype='float32',
+                             mode='w+',
+                             shape=(len(val_label), 3, max_frame, num_joint, max_body))
+        for idx, s in enumerate(val_name):
+            print_output(idx * 1.0 / len(val_label), '({:>5}/{:<5}) Processing {:>5}-{:<5} data: '
+                         .format(idx + 1, len(val_name), benchmark, 'val'))
+            data = read_xyz(os.path.join(data_path, s), max_body=max_body, num_joint=num_joint)
+            f_data[idx, :, 0:data.shape[1], :, :] = data
     with open('{}/{}_label.pkl'.format(out_path, dataset), 'wb') as f:
         pickle.dump((sample_name, list(sample_label)), f)
     f_data = open_memmap('{}/{}_data.npy'.format(out_path, dataset),
@@ -69,18 +84,18 @@ def generate_data(data_path,
                          mode='w+',
                          shape=(len(sample_label), 3, max_frame, num_joint, max_body))
     for idx, s in enumerate(sample_name):
-        print_output(idx*1.0/len(sample_label),'({:>5}/{:<5}) Processing {:>5}-{:<5} data: '
-                     .format(idx+1,len(sample_name),benchmark,dataset))
+        print_output(idx * 1.0 / len(sample_label), '({:>5}/{:<5}) Processing {:>5}-{:<5} data: '
+                     .format(idx + 1, len(sample_name), benchmark, dataset))
         data = read_xyz(os.path.join(data_path, s), max_body=max_body, num_joint=num_joint)
         f_data[idx, :, 0:data.shape[1], :, :] = data
     sys.stdout.write('\n')
 
+
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='NTU-RGB+D Data.')
+    parser = argparse.ArgumentParser(description='NTU-RGB-D Data.')
     parser.add_argument('--data_path', default='data/NTU-RGB+D/nturgb+d_skeletons')
     parser.add_argument('--ignore_sample_path', default='data/samples_with_missing_skeletons.txt')
     parser.add_argument('--out_folder', default='data/NTU-RGB+D')
-
     benchmark = ['cs', 'cv']
     dataset = ['train', 'test']
     arg = parser.parse_args()

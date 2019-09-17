@@ -24,8 +24,6 @@ class VACNN(nn.Module):
                  base_model=None,
                  in_channel=3,
                  out_channel=128,
-                 height_frame=224,
-                 width_joint=224,
                  num_person=2,
                  sub_class=6,
                  num_class=60
@@ -77,7 +75,7 @@ class VACNN(nn.Module):
                 )
                 rotation = torch.mm(torch.mm(rotation_x, rotation_y), rotation_z)
                 out_ = torch.mm(rotation, x[n, :, :, :, idx].view(C, T * V)) + 255 * (
-                        torch.mm(rotation, (min_map[:, None] - out[n, 3:].view(-1, 1).expand(-1, T * V))) - min_map[
+                        torch.mm(rotation, (min_map[:, None] + out[n, 3:].view(-1, 1).expand(-1, T * V))) - min_map[
                                                                                                             :,
                                                                                                             None]) / 8.812765
                 out_ = out_.contiguous().view(C, T, V)
@@ -95,7 +93,7 @@ class VACNN(nn.Module):
 
 
 if __name__ == '__main__':
-    resnet = models.resnet50(pretrained=True)
+    resnet = models.resnet50(pretrained=False)
     model = VACNN(base_model=resnet)
     children = list(model.children())
     print(children)
