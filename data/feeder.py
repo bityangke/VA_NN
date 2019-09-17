@@ -10,7 +10,10 @@ import numpy as np
 import torch
 import torch.utils.data
 
-from . import tools
+try:
+    from data import tools
+except:
+    import tools
 
 
 class Feeder(torch.utils.data.Dataset):

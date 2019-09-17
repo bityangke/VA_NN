@@ -76,10 +76,10 @@ def generate_data(data_path,
     sys.stdout.write('\n')
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='NTU-RGB-D Data.')
-    parser.add_argument('--data_path', default='/home/hjm/Data/NTU-RGB-D/nturgb+d_skeletons')
+    parser = argparse.ArgumentParser(description='NTU-RGB+D Data.')
+    parser.add_argument('--data_path', default='data/NTU-RGB+D/nturgb+d_skeletons')
     parser.add_argument('--ignore_sample_path', default='data/samples_with_missing_skeletons.txt')
-    parser.add_argument('--out_folder', default='data/NTU-RGB-D')
+    parser.add_argument('--out_folder', default='data/NTU-RGB+D')
 
     benchmark = ['cs', 'cv']
     dataset = ['train', 'test']
