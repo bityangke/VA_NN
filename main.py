@@ -140,16 +140,15 @@ def train(writer, model, optimizer, device, train_loader, epoch):
         loss = nn.CrossEntropyLoss()(output, target)
         loss.backward()
         losses += loss.item()
-        if (idx + 1) % 4 == 0:
-            optimizer.step()
-            optimizer.zero_grad()
-        if (idx + 1) % 80 == 0:
+        optimizer.step()
+        optimizer.zero_grad()
+        if (idx + 1) % 50 == 0:
             writer.add_scalar('Loss/train',
-                              losses / 20,
-                              epoch * (len(train_loader) // 4 + 1) + idx // 4 + 1)
+                              losses / 50,
+                              epoch * len(train_loader) + idx + 1)
             print("{:%Y-%m-%dT%H-%M-%S}  epoch:{}  (batch:{} loss:{:.2f}).".format(datetime.now(), epoch + 1,
-                                                                                   idx // 4 + 1,
-                                                                                   losses / 20))
+                                                                                   idx + 1,
+                                                                                   losses / 50))
             losses = 0.0
 
 
