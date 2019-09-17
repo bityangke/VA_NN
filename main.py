@@ -26,7 +26,7 @@ def str2bool(v):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset_dir', default='data/', help='root directory for all datasets')
-parser.add_argument('--dataset_name', default='NTU-RGB-D-CV', help='dataset name')
+parser.add_argument('--dataset_name', default='NTU-RGB+D-CV', help='dataset name')
 parser.add_argument('--save_dir', default='weights/', help='root directory for saving checkpoint models')
 parser.add_argument('--log_dir', default='logs/', help='root directory for train and test log')
 parser.add_argument('--model_name', default='VACNN', help='model name')
@@ -57,9 +57,11 @@ def main():
 
     device = torch.device("cuda" if args.cuda else "cpu")
     if args.model_name == 'VACNN':
-        model = VACNN(base_model=models.resnet50()).to(device)
+        model = VACNN(base_model=models.resnet50())
+        model = nn.DataParallel(model).to(device)
     elif args.model_name == 'VARNN':
-        model = VARNN().to(device)
+        model = VARNN()
+        model = nn.DataParallel(model).to(device)
     else:
         raise ValueError()
 
