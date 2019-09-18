@@ -129,8 +129,8 @@ def fetch_dataloader(mode, params):
 
 
 if __name__ == '__main__':
-    data_path = '/home/hjm/PycharmProjects/VA_NN/data/NTU-RGB+D/cv/val_data.npy'
-    label_path = '/home/hjm/PycharmProjects/VA_NN/data/NTU-RGB+D/cv/val_label.pkl'
+    data_path = 'data/NTU-RGB+D/cv/val_data.npy'
+    label_path = 'data/NTU-RGB+D/cv/val_label.pkl'
     dataset = Feeder(data_path,
                      label_path,
                      normalization=True,
