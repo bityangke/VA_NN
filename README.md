@@ -4,9 +4,9 @@ You can also reference to [microsoft official code](https://github.com/microsoft
 
 ### Prerequisites
 
-* Python3.6
-* PyTorch1.2
-* Opencv3.4
+* Python 3.6
+* PyTorch 1.2
+* Opencv 3.4
 * Other packages can be found in ```requirements.txt```
 
 ### Data Preparation
