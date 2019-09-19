@@ -1,13 +1,18 @@
 FROM nvidia/cuda:10.1-devel-ubuntu18.04
 MAINTAINER jiamingNo1 jiaming19.huang@foxmail.com
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+COPY sources.list .
+
+RUN mv /etc/apt/sources.list /etc/apt/sources.list.save && \
+    mv sources.list /etc/apt/sources.list && \
+    apt-get update && apt-get install -y \
         apt-utils \
         build-essential \
         cmake \
         git \
         curl \
-        python3-pip && \
+        python3-pip \
+        libsm6 libxext6 libxrender-dev libglib2.0-0 && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
